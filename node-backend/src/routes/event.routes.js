@@ -1,13 +1,16 @@
 
 import { Router } from "express";
-import { eventController } from "../controllers/event.controller.js";
+import { authenticateUser } from "../middleware/auth.middleware.js";
+import { userRoutes } from "./user.routes.js";
+import { companyRoutes } from "./company.routes.js";
 
 const router = Router();
 
-router.get("/", eventController.getAll);
-router.get("/:id", eventController.getById);
-router.post("/", eventController.create);
-router.put("/:id", eventController.update);
-router.delete("/:id", eventController.delete);
+// Authenticate every event API.
+router.use(authenticateUser);
+
+// Mount role-specific routes.
+router.use("/users", userRoutes);
+router.use("/company", companyRoutes);
 
 export default router;

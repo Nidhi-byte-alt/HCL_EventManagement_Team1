@@ -1,87 +1,91 @@
-# Smart Event Management & Registration Platform — Node.js Backend
+Smart Event Management & Registration Platform — Node.js Backend
+1. Project Overview
 
-## 1. Project Overview
+This is the Node.js and Express backend for the Smart Event Management & Registration Platform. It provides REST APIs for event management, user event discovery, event registration, and registration cancellation.
 
-This is the Node.js and Express backend for the Smart Event Management & Registration Platform. It provides REST APIs for managing events and uses a JSON file for data persistence.
+The application uses JavaScript ES Modules and JSON files for data persistence. Authentication is handled by authentication middleware, while role-based middleware restricts user and company access to their respective endpoints.
 
-**Current scope:** Event CRUD operations, input validation, and centralized error handling.
+API prefixes:
 
-Authentication and registration functionality are handled separately by the team and should be documented here after integration.
+/api/user/* — User event discovery and registration.
+/api/company/* — Company event management.
+2. Features
+Retrieve available and published events.
+Retrieve event details by ID.
+Create, update, and delete events as a company.
+Register for an event as an authenticated user.
+Retrieve the authenticated user's registrations.
+Cancel an event registration.
+Authenticate requests using authentication middleware.
+Authorize requests according to user roles.
+Validate event and registration data.
+Persist data using JSON files.
+Handle malformed JSON and unknown routes.
+Centralized error handling and JSON responses.
+3. Technologies Used
+Node.js
+Express.js
+JavaScript ES Modules
+dotenv for environment configuration
+CORS
+JSON-file persistence
+Postman for API testing
+Nodemon for development
+4. Prerequisites
 
-## 2. Features
+Install the following:
 
-- Retrieve all events.
-- Retrieve an event by ID.
-- Create new events.
-- Update existing events.
-- Delete events.
-- Validate event request data.
-- Persist events in a JSON file.
-- Handle malformed JSON requests.
-- Handle unknown routes.
-- Centralized handling of unexpected server errors.
-- JSON responses for successful and unsuccessful requests.
-
-## 3. Technologies Used
-
-- Node.js
-- Express.js
-- CORS
-- JavaScript ES Modules
-- JSON file storage
-- Postman for API testing
-- Nodemon for development
-
-## 4. Prerequisites
-
-Install the following before running the application:
-
-- Node.js and npm
-- Visual Studio Code or another code editor
-- Postman (recommended for API testing)
-
-## 5. Project Structure
-
-```text
+Node.js and npm
+Visual Studio Code or another code editor
+Postman (recommended for API testing)
+5. Project Structure
 server/
 ├── src/
 │   ├── app.js
 │   ├── controllers/
-│   │   └── event.controller.js
+│   │   ├── event.controller.js
+│   │   ├── user.controller.js
+│   │   └── registration.controller.js
 │   ├── services/
-│   │   └── event.service.js
+│   │   ├── event.service.js
+│   │   └── registration.service.js
 │   ├── repositories/
-│   │   └── event.repository.js
+│   │   ├── event.repository.js
+│   │   └── registration.repository.js
 │   ├── routes/
-│   │   └── event.routes.js
+│   │   ├── event.routes.js
+│   │   ├── user.routes.js
+│   │   └── company.routes.js
 │   ├── middleware/
+│   │   ├── auth.middleware.js
+│   │   ├── role.middleware.js
 │   │   └── error.middleware.js
 │   └── data/
-│       └── events.json
+│       ├── events.json
+│       └── registrations.json
+├── .env
 ├── package.json
+├── package-lock.json
 └── README.md
-```
 
-## 6. Installation
 
-Open a terminal in the `server` directory.
+The exact structure may vary depending on the authentication implementation and additional modules in the project.
 
-Install the existing project dependencies:
+6. Installation
 
-```bash
+Open a terminal in the server directory and run:
+
 npm install
-```
 
-If the dependencies have not yet been installed, use:
 
-```bash
-npm install express cors
+If you need to install the main dependencies separately:
+
+npm install express cors dotenv
 npm install --save-dev nodemon
-```
 
-Ensure that `package.json` includes the following configuration and scripts. Preserve any other existing dependencies and project settings.
 
-```json
+Ensure package.json contains "type": "module" and suitable scripts:
+
 {
   "type": "module",
   "scripts": {
@@ -89,438 +93,441 @@ Ensure that `package.json` includes the following configuration and scripts. Pre
     "dev": "nodemon src/app.js"
   }
 }
-```
 
-## 7. Running the Application
 
-### Development mode
+Preserve all other existing package configuration and dependencies.
 
-Run:
+7. Environment Configuration
 
-```bash
+Create a .env file in the server directory and configure the environment variables required by your authentication implementation.
+
+Example:
+
+PORT=3000
+
+
+Add any required JWT or authentication secrets using the variable names expected by your middleware. Do not commit secrets to version control.
+
+Load environment variables using:
+
+import "dotenv/config";
+
+8. Running the Application
+Development mode
 npm run dev
-```
 
-Nodemon automatically restarts the server when watched files change.
-
-### Normal mode
-
-Run:
-
-```bash
+Normal mode
 npm start
-```
 
-The server listens on port `3000`.
 
-Base URL:
+Default base URL:
 
-```text
 http://localhost:3000
-```
 
-### Health check
 
-Request:
+The API endpoints documented below assume that the main application mounts the event router at /api.
 
-```http
-GET http://localhost:3000/
-```
+Health check
+
+If configured in app.js, the health check can be accessed at:
+
+GET /
+
 
 Expected response:
 
-```json
 {
   "success": true,
   "message": "Smart Event Management API is running"
 }
-```
 
-## 8. Event API Documentation
+9. API Route Configuration
+
+The main event router should be mounted in app.js:
+
+import eventRoutes from "./routes/event.routes.js";
+
+app.use("/api", eventRoutes);
+
+
+The event router should mount the role-specific routers as follows:
+
+import { Router } from "express";
+import { authenticateUser } from "../middleware/auth.middleware.js";
+import { userRoutes } from "./user.routes.js";
+import { companyRoutes } from "./company.routes.js";
+
+const router = Router();
+
+// Authenticate event API requests.
+router.use(authenticateUser);
+
+// Mount role-specific routes.
+router.use("/user", userRoutes);
+router.use("/company", companyRoutes);
+
+export default router;
+
+
+Important: Use /user, not /users, to match the requested /api/user/* endpoint prefix.
+
+Authentication must populate req.auth with the authenticated identity and user type expected by the authorization middleware.
+
+10. User API Endpoints
 
 Base URL:
 
-```text
-http://localhost:3000
-```
+http://localhost:3000/api/user
 
-| Method | Endpoint | Description | Success Status |
-|---|---|---|---|
-| GET | `/api/events` | Retrieve all events | 200 OK |
-| GET | `/api/events/:id` | Retrieve an event by ID | 200 OK |
-| POST | `/api/events` | Create an event | 201 Created |
-| PUT | `/api/events/:id` | Update an event | 200 OK |
-| DELETE | `/api/events/:id` | Delete an event | 200 OK |
 
-### 8.1 Get All Events
+All user endpoints require authentication and the user role.
 
-**Request**
+Method	Endpoint	Description	Success Status
+GET	/api/user/events	Retrieve available events	200 OK
+GET	/api/user/events/:id	Retrieve an event by ID	200 OK
+POST	/api/user/events/:id/register	Register for an event	201 Created
+GET	/api/user/events/registrations	Retrieve the user's registrations	200 OK
+DELETE	/api/user/events/registrations/:registrationId	Cancel a registration	200 OK
+10.1 Get All Available Events
 
-```http
-GET /api/events
-```
+Request
 
-Full URL:
+GET /api/user/events
 
-```text
-http://localhost:3000/api/events
-```
 
-**Expected response**
+Returns events that meet the availability criteria implemented in the event service, such as published status and a valid future date and time.
 
-The API returns an array of event objects.
+The actual response format depends on the user controller implementation.
 
-```json
-[
-  {
-    "id": "1",
-    "title": "Node.js Backend Workshop",
-    "description": "Learn backend development and REST APIs",
-    "date": "2026-11-10",
-    "location": "New Delhi",
-    "capacity": 50
-  },
-  {
-    "id": "2",
-    "title": "React Development Meetup",
-    "description": "Explore React and modern frontend development",
-    "date": "2026-11-15",
-    "location": "Jaipur",
-    "capacity": 30
+10.2 Get Event by ID
+
+Request
+
+GET /api/user/events/1
+
+
+Returns the requested event if it exists and is available according to the service and controller logic.
+
+Possible responses include:
+
+200 OK — Event returned successfully.
+404 Not Found — Event is unavailable or not found, depending on the implementation.
+10.3 Register for an Event
+
+Request
+
+POST /api/user/events/1/register
+
+
+Authentication is required. The user ID is taken from the authenticated request rather than from the request body.
+
+No request body is required by the current registration controller.
+
+Success response
+
+Status: 201 Created
+
+{
+  "message": "Registration successful",
+  "registration": {
+    "id": 1,
+    "eventId": 1,
+    "userId": "authenticated-user-id",
+    "registeredAt": "2026-10-17T09:00:00.000Z"
   }
-]
-```
-
-The actual response depends on the contents of `events.json`.
-
-### 8.2 Get Event by ID
-
-**Request**
-
-```http
-GET /api/events/1
-```
-
-Full URL:
-
-```text
-http://localhost:3000/api/events/1
-```
-
-**Success response**
-
-Returns the event object if the event exists.
-
-**If the event does not exist**
-
-Status: `404 Not Found`
-
-```json
-{
-  "message": "Event not found"
 }
-```
 
-### 8.3 Create an Event
 
-**Request**
+The IDs and timestamp above are illustrative. The actual values are generated by the application.
 
-```http
-POST /api/events
-```
+Possible errors:
 
-Full URL:
+Status	Meaning
+400 Bad Request	Invalid event ID
+401 Unauthorized	Authentication or authenticated user information is missing
+404 Not Found	Event is not available
+409 Conflict	User is already registered
 
-```text
-http://localhost:3000/api/events
-```
+The registration service checks event availability and existing registrations before creating a registration.
 
-Set the request header:
+10.4 Get the Current User's Registrations
 
-```http
-Content-Type: application/json
-```
+Request
 
-In Postman, select **Body → raw → JSON**.
+GET /api/user/events/registrations
 
-**Request body**
 
-```json
+Returns registrations belonging to the authenticated user, including associated event information when available.
+
+Success status: 200 OK
+
+Example response structure:
+
 {
-  "title": "Backend Hackathon",
-  "description": "Node.js and Express workshop",
+  "message": "Registration list",
+  "registration": [
+    {
+      "id": 1,
+      "eventId": 1,
+      "userId": "authenticated-user-id",
+      "registeredAt": "2026-10-17T09:00:00.000Z",
+      "event": {
+        "id": 1,
+        "title": "Backend Workshop"
+      }
+    }
+  ]
+}
+
+
+The event object shown is abbreviated for illustration.
+
+10.5 Cancel a Registration
+
+Request
+
+DELETE /api/user/events/registrations/1
+
+
+The registration ID is provided in the URL. The authenticated user can cancel only their own registration.
+
+Success response
+
+Status: 200 OK
+
+{
+  "message": "Registration cancelled successfully",
+  "registration": {
+    "id": 1,
+    "eventId": 1,
+    "userId": "authenticated-user-id"
+  }
+}
+
+
+Possible errors:
+
+400 Bad Request — Invalid registration ID.
+401 Unauthorized — Missing authenticated user.
+404 Not Found — Registration not found or not owned by the current user.
+11. Company API Endpoints
+
+Base URL:
+
+http://localhost:3000/api/company
+
+
+All company endpoints require authentication and the company role.
+
+Method	Endpoint	Description	Success Status
+GET	/api/company/events	Retrieve events	200 OK
+GET	/api/company/event/:id	Retrieve an event by ID	200 OK
+POST	/api/company/event	Create an event	201 Created
+PUT	/api/company/event/:id	Update an event	200 OK
+DELETE	/api/company/event/:id	Delete an event	200 OK
+
+These paths match the provided company.routes.js file. The singular /event path is intentional in the current route configuration.
+
+11.1 Get Company Events
+
+Request
+
+GET /api/company/events
+
+
+Returns the events provided by eventController.getAll.
+
+11.2 Get an Event by ID
+
+Request
+
+GET /api/company/event/1
+
+
+Returns the selected event if found.
+
+11.3 Create an Event
+
+Request
+
+POST /api/company/event
+Content-Type: application/json
+
+
+Example request body based on the current event service:
+
+{
+  "title": "Backend Development Workshop",
+  "description": "Learn Node.js and Express",
   "date": "2026-11-20",
+  "time": "14:00",
   "location": "New Delhi",
-  "capacity": 40
+  "capacity": 40,
+  "image": "",
+  "status": "draft"
 }
-```
 
-**Validation requirements**
 
-- `title` must be a non-empty string.
-- `date` must be a valid date string in `YYYY-MM-DD` format according to the controller's validation.
-- `capacity` must be a positive integer.
-- `description` and `location` are optional in the current service implementation.
+The service generates an event ID and sets a publishedAt timestamp when creating the event, according to the current implementation.
 
-**Success status:** `201 Created`
+The default time is 12:00 if no time is supplied. The default status is draft if the service applies the suggested default.
 
-The current controller response format is:
+Success status: 201 Created, assuming the controller uses that status code.
 
-```json
-{
-  "success": true,
-  "message": "Event created successfully",
-  "data": {
-    "id": "generated-id",
-    "title": "Backend Hackathon",
-    "description": "Node.js and Express workshop",
-    "date": "2026-11-20",
-    "location": "New Delhi",
-    "capacity": 40
-  }
-}
-```
+The exact response body depends on event.controller.js.
 
-The actual ID is generated by the backend.
+11.4 Update an Event
 
-### 8.4 Update an Event
+Request
 
-**Request**
-
-```http
-PUT /api/events/1
-```
-
-Full URL:
-
-```text
-http://localhost:3000/api/events/1
-```
-
-Set:
-
-```http
+PUT /api/company/event/1
 Content-Type: application/json
-```
 
-**Request body**
 
-```json
+Example request body:
+
 {
-  "title": "Updated Node.js Workshop",
-  "description": "Advanced Node.js backend development",
-  "date": "2026-11-12",
+  "title": "Updated Backend Workshop",
+  "description": "Advanced Node.js and Express",
+  "date": "2026-11-22",
+  "time": "15:00",
   "location": "New Delhi",
-  "capacity": 60
+  "capacity": 60,
+  "image": "",
+  "status": "published"
 }
-```
 
-The current update controller expects a non-empty title, a valid-format date, and a positive integer capacity.
 
-**Success status:** `200 OK`
+The update controller and service determine which fields are required and which fields can be changed.
 
-```json
-{
-  "success": true,
-  "message": "Event updated successfully",
-  "data": {
-    "id": "1",
-    "title": "Updated Node.js Workshop",
-    "description": "Advanced Node.js backend development",
-    "date": "2026-11-12",
-    "location": "New Delhi",
-    "capacity": 60
-  }
-}
-```
+Success status: 200 OK, assuming the controller returns this status.
 
-The returned event should retain its original ID.
+11.5 Delete an Event
 
-### 8.5 Delete an Event
+Request
 
-**Request**
+DELETE /api/company/event/1
 
-```http
-DELETE /api/events/1
-```
 
-Full URL:
+No request body is required unless the controller specifies otherwise.
 
-```text
-http://localhost:3000/api/events/1
-```
+Success status: 200 OK, assuming the controller returns this status.
 
-No request body is required.
+If the event does not exist, the API should return 404 Not Found if that behavior is implemented by the controller or repository.
 
-**Success status:** `200 OK`
+12. Authentication and Authorization
 
-```json
-{
-  "success": true,
-  "message": "Event deleted successfully"
-}
-```
+The event router applies authentication middleware before mounting the user and company routers.
 
-If the event does not exist, the API returns `404 Not Found`.
+The role middleware checks the authenticated identity:
 
-## 9. Error Handling
+allowUser permits requests where req.auth.userType === "user".
+allowCompany permits requests where req.auth.userType === "company".
 
-The application uses centralized Express error middleware for unexpected errors and malformed JSON. Expected validation errors and missing events are handled by the relevant controller.
+Typical authorization responses:
 
-| Scenario | HTTP Status | Expected Behavior |
-|---|---|---|
-| Invalid event input | 400 Bad Request | Returns a validation message |
-| Malformed JSON | 400 Bad Request | Returns `Invalid JSON request body` |
-| Unknown route | 404 Not Found | Returns a route-not-found message |
-| Event not found | 404 Not Found | Returns `Event not found` |
-| Unexpected server error | 500 Internal Server Error | Returns `Internal server error` |
+Status	Meaning
+401 Unauthorized	Authentication information is missing or invalid
+403 Forbidden	Authenticated identity does not have the required role
 
-### Invalid event input example
+The authentication middleware must run before the role middleware so that req.auth is available.
 
-```json
-{
-  "success": false,
-  "message": "Valid title, date (YYYY-MM-DD), and positive integer capacity are required"
-}
-```
+Use the authentication mechanism configured in your project when testing protected endpoints in Postman.
 
-### Malformed JSON example
+13. Error Handling
 
-```json
-{
-  "success": false,
-  "message": "Invalid JSON request body"
-}
-```
+The application should use centralized Express error middleware to handle unexpected errors, malformed JSON, and errors forwarded by controllers.
 
-### Unknown route example
+Scenario	HTTP Status
+Invalid request data	400 Bad Request
+Missing or invalid authentication	401 Unauthorized
+Incorrect role	403 Forbidden
+Event or registration not found	404 Not Found
+Duplicate registration	409 Conflict
+Unknown route	404 Not Found
+Unexpected server error	500 Internal Server Error
 
-Request:
+The exact response body depends on the error middleware implementation.
 
-```http
-GET /api/unknown
-```
+Controllers should forward unexpected errors using:
 
-Response:
+next(error);
 
-```json
-{
-  "success": false,
-  "message": "Route not found: GET /api/unknown"
-}
-```
 
-### Unexpected server error example
+Register the unknown-route handler after the application routes and the centralized error handler after the unknown-route handler.
 
-```json
-{
-  "success": false,
-  "message": "Internal server error"
-}
-```
+14. Data Persistence
 
-The actual error details are logged on the server rather than exposed in the client response.
+The application uses JSON files for local persistence. Depending on the repository implementation, files may include:
 
-### Middleware execution order
-
-The application registers middleware in this order:
-
-1. CORS and JSON body parsing.
-2. Health-check and application routes.
-3. Unknown-route handler.
-4. Centralized error handler.
-
-Controllers forward unexpected errors using `next(error)`.
-
-## 10. Data Persistence
-
-Events are stored in:
-
-```text
 src/data/events.json
-```
+src/data/registrations.json
 
-Example file content:
 
-```json
-[
-  {
-    "id": "1",
-    "title": "Node.js Backend Workshop",
-    "description": "Learn backend development and REST APIs",
-    "date": "2026-11-10",
-    "location": "New Delhi",
-    "capacity": 50
-  }
-]
-```
+Ensure each file contains valid JSON. For example, an empty collection should be represented as:
 
-Create the file if it does not exist. It must contain valid JSON.
+[]
 
-The repository reads and writes this file to retrieve and persist events. Data remains in the file across server restarts.
 
-**Limitation:** JSON-file persistence is appropriate for a hackathon prototype. Concurrent writes and multi-instance production deployments require stronger concurrency control and a database.
+JSON-file persistence is suitable for a prototype, but concurrent writes and multi-instance production deployments require stronger concurrency controls and a database.
 
-## 11. Testing with Postman
+15. Testing with Postman
 
-Use the following checklist before merging the backend branch.
+Test the following endpoints and behaviors before merging changes:
 
-- [ ] `GET /api/events` returns all events.
-- [ ] `GET /api/events/1` returns the selected event.
-- [ ] `POST /api/events` creates an event.
-- [ ] `PUT /api/events/1` updates an event.
-- [ ] `DELETE /api/events/1` deletes an event.
-- [ ] Invalid event data returns `400 Bad Request`.
-- [ ] Malformed JSON returns `400 Bad Request`.
-- [ ] An unknown route returns `404 Not Found`.
-- [ ] A nonexistent event ID returns `404 Not Found`.
-- [ ] An unexpected error forwarded with `next(error)` returns `500 Internal Server Error`.
-- [ ] Temporary test code used to trigger errors has been removed.
-- [ ] Existing event APIs still work after error-handling changes.
+User routes
+GET /api/user/events
+GET /api/user/events/:id
+POST /api/user/events/:id/register
+GET /api/user/events/registrations
+DELETE /api/user/events/registrations/:registrationId
+Company routes
+GET /api/company/events
+GET /api/company/event/:id
+POST /api/company/event
+PUT /api/company/event/:id
+DELETE /api/company/event/:id
+Security and validation
+Requests without valid authentication are rejected.
+A user cannot access company-only endpoints.
+A company cannot access user-only endpoints.
+Duplicate registrations return 409 Conflict.
+Invalid event and registration IDs are rejected.
+Users cannot cancel another user's registration.
+Unavailable events cannot be registered for.
+Malformed JSON and unknown routes are handled correctly.
+16. Frontend Integration
 
-## 12. Frontend Integration Notes
+Use the following base URL during local development:
 
-For local development, the frontend can use:
+http://localhost:3000/api
 
-```text
-http://localhost:3000
-```
 
-The frontend should call the event endpoints documented above.
+User endpoints begin with /user, while company endpoints begin with /company.
 
-**Important response-format note:** The create and update controllers return the event inside the `data` property of the JSON response. If the frontend uses Axios, the event object is therefore accessed as `response.data.data`.
+For example:
 
-The list and get-by-ID controllers currently return the event list or event object directly. Coordinate these response formats with the frontend teammate before integration.
+// Retrieve events as a user
+fetch("http://localhost:3000/api/user/events");
 
-CORS is enabled in the Express application to support local frontend requests.
+// Retrieve company events
+fetch("http://localhost:3000/api/company/events");
 
-## 13. Team Integration Scope
 
-This README documents the Node.js event APIs implemented so far.
+Protected endpoints require the authentication credentials expected by your authentication middleware.
 
-The following should be added to the documentation when the team confirms and integrates the corresponding endpoints:
+Coordinate response formats with the frontend team. Some controllers may return data directly, while others return an object containing a message and a registration or data property.
 
-- User authentication and JWT validation.
-- Admin authorization for event management.
-- Event registration and cancellation APIs.
-- Registration capacity and duplicate-registration rules.
-- Any additional environment variables or deployment configuration.
+17. Git and Merge Checklist
 
-Do not assume these endpoints are available until the team has implemented and tested them.
+Before merging:
 
-## 14. Git and Merge Checklist
+Run the server with npm run dev.
+Verify all user and company routes in Postman.
+Confirm the authentication and role middleware work as expected.
+Verify event registration, duplicate prevention, and cancellation.
+Confirm the JSON data files contain valid data.
+Ensure .env secrets are not committed.
+Commit the README and source changes to the appropriate team branch.
 
-Before merging into the shared team branch:
-
-1. Ensure all temporary test code has been removed.
-2. Run the server with `npm run dev`.
-3. Test the event APIs and error-handling scenarios in Postman.
-4. Confirm `package.json` and `package-lock.json` are included when applicable.
-5. Confirm `events.json` contains valid JSON and no unintended test data.
-6. Add this README to the `server` directory.
-7. Commit and push your branch.
-8. Coordinate the merge with the team.
-
----
-
-**Backend status:** Event CRUD, event input validation, JSON-file persistence, unknown-route handling, malformed-JSON handling, and centralized unexpected-error handling are documented here. Authentication and registration are outside the currently documented implementation scope.
+Backend overview: The documented API structure separates user event discovery and registration from company event management. All endpoints are mounted under /api/user/* or /api/company/*, with authentication and role-based authorization applied by the event router.
