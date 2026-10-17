@@ -5,7 +5,11 @@
     "description": "Explore React and modern frontend development",
     "date": "2026-11-15",
     "location": "Jaipur",
-    "capacity": 30
+    "capacity": 30,
+    "time": "10:00",
+    "publishedAt": "2026-10-01T09:00:00.000Z",
+    "image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
+    "status": "published"
   },
   {
     "id": "9b291ddc-2b52-4c1b-8deb-10389b6c8b86",
@@ -13,7 +17,11 @@
     "description": "Node.js and Express workshop",
     "date": "2026-11-20",
     "location": "New Delhi",
-    "capacity": 40
+    "capacity": 40,
+    "time": "10:00",
+    "publishedAt": "2026-10-01T09:00:00.000Z",
+    "image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
+    "status": "published"
   },
   {
     "id": "7384b4f1-e2eb-44da-89a3-65c3f4e44e60",
@@ -21,7 +29,11 @@
     "description": "Node.js and Express workshop",
     "date": "2026-11-20",
     "location": "New Delhi",
-    "capacity": 40
+    "capacity": 40,
+    "time": "10:00",
+    "publishedAt": "2026-10-01T09:00:00.000Z",
+    "image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
+    "status": "published"
   },
   {
     "id": "c3e95d40-c5d7-4d03-ae31-f03911b42302",
@@ -29,6 +41,10 @@
     "description": "Node.js and Express workshop",
     "date": "2026-11-20",
     "location": "New Delhi",
-    "capacity": 40
+    "capacity": 40,
+    "time": "10:00",
+    "publishedAt": "2026-10-01T09:00:00.000Z",
+    "image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
+    "status": "draft"
   }
 ]

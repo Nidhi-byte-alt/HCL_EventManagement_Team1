@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import eventRoutes from "./routes/event.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
+import "dotenv/config";
 
 const PORT = 3000;
 const app = express();
@@ -20,7 +21,7 @@ app.get("/", (req, res) => {
 });
 
 // routes
-app.use("/api/events", eventRoutes);
+app.use("/api", eventRoutes);
 
 
 app.use((req, res) => {
