@@ -3,7 +3,26 @@ import { useState } from "react";
 import "./App.css";
 import Dashboard from "./Dashboard";
 
-const API_URL = "http://localhost:5000/api/auth";
+// Demo-only authentication data. Do not use this approach in production.
+const DEMO_USERS = [
+  {
+    id: 1,
+    name: "Demo User",
+    email: "user@eventora.com",
+    password: "User@123",
+    role: "User",
+  },
+  {
+    id: 2,
+    name: "Demo Admin",
+    email: "admin@eventora.com",
+    password: "Admin@123",
+    role: "Admin",
+  },
+];
+
+const USERS_STORAGE_KEY = "eventoraUsers";
+const ADMIN_INVITE_CODE = "EVENTORA-ADMIN-2026";
 
 const initialForm = {
   name: "",
@@ -47,104 +66,85 @@ function App() {
     e.preventDefault();
     setMessage("");
 
-    if (isRegister && form.password !== form.confirmPassword) {
+    const email = form.email.trim().toLowerCase();
+    const password = form.password;
+
+    if (isRegister && !form.name.trim()) {
+      setMessage("Please enter your full name.");
+      setMessageType("error");
+      return;
+    }
+
+    if (isRegister && password !== form.confirmPassword) {
       setMessage("Your passwords do not match.");
+      setMessageType("error");
       return;
     }
 
-    if (form.password.length < 8) {
+    if (password.length < 8) {
       setMessage("Password must contain at least 8 characters.");
+      setMessageType("error");
       return;
     }
 
-    if (
-      isRegister &&
-      accountType === "Admin" &&
-      !form.adminInviteCode.trim()
-    ) {
-      setMessage("An admin invitation code is required.");
+    if (isRegister && accountType === "Admin" && form.adminInviteCode !== ADMIN_INVITE_CODE) {
+      setMessage("Invalid admin invitation code.");
+      setMessageType("error");
       return;
     }
 
     setLoading(true);
 
     try {
-      const payload = isRegister
-        ? {
-            name: form.name.trim(),
-            email: form.email.trim(),
-            password: form.password,
-            accountType,
-            ...(accountType === "Admin"
-              ? { adminInviteCode: form.adminInviteCode }
-              : {}),
-          }
-        : {
-            email: form.email.trim(),
-            password: form.password,
-          };
-
-      const response = await fetch(
-        `${API_URL}/${isRegister ? "register" : "login"}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
+      const savedUsers = JSON.parse(
+        localStorage.getItem(USERS_STORAGE_KEY) || "[]"
       );
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            (isRegister
-              ? "Registration failed."
-              : "Invalid email or password.")
-        );
-      }
+      const allUsers = [...DEMO_USERS, ...savedUsers];
 
       if (isRegister) {
-        setMessage(
-          data.message ||
-            "Registration successful! Please sign in to continue."
+        const alreadyExists = allUsers.some(
+          (user) => user.email.toLowerCase() === email
         );
+
+        if (alreadyExists) {
+          throw new Error("An account with this email already exists.");
+        }
+
+        const newUser = {
+          id: Date.now(),
+          name: form.name.trim(),
+          email,
+          password,
+          role: accountType,
+        };
+
+        savedUsers.push(newUser);
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(savedUsers));
+
+        setMessage("Registration successful! Please sign in.");
         setMessageType("success");
-
-        setForm({
-          ...initialForm,
-          email: form.email.trim(),
-        });
-
+        setForm({ ...initialForm, email });
         setPage("login");
         return;
       }
 
-      if (!data.token || !data.user) {
-        throw new Error(
-          "The login API must return both token and user details."
-        );
+      const matchedUser = allUsers.find(
+        (user) =>
+          user.email.toLowerCase() === email && user.password === password
+      );
+
+      if (!matchedUser) {
+        throw new Error("Invalid email or password.");
       }
 
-      const userRole = String(
-        data.user.role || data.user.accountType || ""
-      ).toLowerCase();
-
-      if (!["user", "admin"].includes(userRole)) {
-        throw new Error(
-          "The API returned an invalid user role. Please contact the team."
-        );
-      }
-
+      const { password: _password, ...safeUser } = matchedUser;
       const normalizedUser = {
-        ...data.user,
-        role: userRole === "admin" ? "Admin" : "User",
+        ...safeUser,
+        role: String(matchedUser.role).toLowerCase() === "admin" ? "Admin" : "User",
       };
 
       if (form.rememberMe) {
-        sessionStorage.setItem("accessToken", data.token);
+        sessionStorage.setItem("accessToken", `demo-token-${matchedUser.id}`);
       } else {
         sessionStorage.removeItem("accessToken");
       }
@@ -152,11 +152,7 @@ function App() {
       setAuthenticatedUser(normalizedUser);
       setMessage("");
     } catch (error) {
-      setMessage(
-        error.message === "Failed to fetch"
-          ? "Unable to connect to the server. Check the API URL and backend status."
-          : error.message
-      );
+      setMessage(error.message || "Something went wrong.");
       setMessageType("error");
     } finally {
       setLoading(false);
@@ -435,7 +431,7 @@ function App() {
                     />
 
                     <small className="helper-text">
-                      Admin access requires backend verification.
+                      Demo code: EVENTORA-ADMIN-2026
                     </small>
                   </div>
                 )}
