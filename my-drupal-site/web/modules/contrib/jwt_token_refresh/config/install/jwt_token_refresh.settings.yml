@@ -1,0 +1,10 @@
+access_token_lifetime: 3600
+refresh_token_lifetime: 604800
+refresh_token_bytes: 64
+inject_into_user_login: false
+max_tokens_per_user: 10
+cleanup_on_cron: true
+flood_ip_limit: 50
+flood_user_limit: 5
+enable_access_token_revocation: false
+jti_bytes: 16

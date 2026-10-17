@@ -1,0 +1,54 @@
+<?php
+
+/**
+ * @file
+ * Hook implementations for the JWT Token Refresh module.
+ *
+ * @see \Drupal\jwt_token_refresh\Hook\JwtTokenRefreshHooks
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Hook\Attribute\LegacyHook;
+use Drupal\jwt_token_refresh\Hook\JwtTokenRefreshHooks;
+use Drupal\user\UserInterface;
+
+/**
+ * Implements hook_cron().
+ */
+#[LegacyHook]
+function jwt_token_refresh_cron(): void {
+  \Drupal::service(JwtTokenRefreshHooks::class)->cron();
+}
+
+/**
+ * Implements hook_user_update().
+ */
+#[LegacyHook]
+function jwt_token_refresh_user_update(UserInterface $account): void {
+  \Drupal::service(JwtTokenRefreshHooks::class)->userUpdate($account);
+}
+
+/**
+ * Implements hook_user_cancel().
+ *
+ * @phpstan-param array<string, mixed> $edit
+ */
+#[LegacyHook]
+function jwt_token_refresh_user_cancel(
+  array $edit,
+  UserInterface $account,
+  string $method,
+): void {
+  \Drupal::service(JwtTokenRefreshHooks::class)
+    ->userCancel($edit, $account, $method);
+}
+
+/**
+ * Implements hook_user_delete().
+ */
+#[LegacyHook]
+function jwt_token_refresh_user_delete(EntityInterface $entity): void {
+  \Drupal::service(JwtTokenRefreshHooks::class)->userDelete($entity);
+}

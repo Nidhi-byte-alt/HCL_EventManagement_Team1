@@ -1,0 +1,6 @@
+
+name: Custom Registration
+type: module
+description: 'A custom module for learning Drupal user registration.'
+package: Custom
+core_version_requirement: ^10 || ^11

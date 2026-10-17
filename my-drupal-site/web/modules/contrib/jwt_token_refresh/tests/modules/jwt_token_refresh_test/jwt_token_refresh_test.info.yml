@@ -1,0 +1,12 @@
+name: 'JWT Token Refresh test'
+type: module
+description: 'Test helper for jwt_token_refresh: enriches token responses.'
+package: Testing
+core_version_requirement: ^10.3 || ^11
+dependencies:
+  - jwt_token_refresh:jwt_token_refresh
+
+# Information added by Drupal.org packaging script on 2026-09-13
+version: '1.0.5'
+project: 'jwt_token_refresh'
+datestamp: 1789320346

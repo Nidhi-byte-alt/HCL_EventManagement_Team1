@@ -1,0 +1,8 @@
+
+custom_registration.register:
+  path: '/custom-register'
+  defaults:
+    _form: '\Drupal\custom_registration\Form\CustomRegistrationForm'
+    _title: 'Create an account'
+  requirements:
+    _access: 'TRUE'

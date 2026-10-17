@@ -1,0 +1,34 @@
+jwt_token_refresh.settings:
+  type: config_object
+  label: 'JWT Token Refresh settings'
+  mapping:
+    access_token_lifetime:
+      type: integer
+      label: 'Access token lifetime (seconds)'
+    refresh_token_lifetime:
+      type: integer
+      label: 'Refresh token lifetime (seconds)'
+    refresh_token_bytes:
+      type: integer
+      label: 'Refresh token entropy (bytes, minimum 32)'
+    inject_into_user_login:
+      type: boolean
+      label: 'Inject tokens into core /user/login response'
+    max_tokens_per_user:
+      type: integer
+      label: 'Maximum concurrent refresh tokens per user'
+    cleanup_on_cron:
+      type: boolean
+      label: 'Purge expired tokens on cron'
+    flood_ip_limit:
+      type: integer
+      label: 'Login attempts per hour per IP'
+    flood_user_limit:
+      type: integer
+      label: 'Login attempts per uid/IP pair'
+    enable_access_token_revocation:
+      type: boolean
+      label: 'Enable server-side access token revocation (jti allowlist)'
+    jti_bytes:
+      type: integer
+      label: 'jti entropy (bytes, minimum 16)'

@@ -1,0 +1,164 @@
+<?php
+
+/**
+ * @file
+ * Install, update and schema hooks for JWT Token Refresh.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\Hook\Attribute\LegacyRequirementsHook;
+use Drupal\jwt_token_refresh\Hook\JwtTokenRefreshRequirements;
+
+/**
+ * Implements hook_requirements().
+ *
+ * This is the only implementation on cores older than 11.2, which have no
+ * hook_runtime_requirements(); on 11.2 both run and produce the same key, so
+ * the duplicate merges away; and from 11.3 the #[LegacyRequirementsHook]
+ * attribute disables this one outright. The requirement itself is built by
+ * JwtTokenRefreshRequirements, which is also the attribute-based
+ * implementation of the newer hook.
+ *
+ * @phpstan-param string $phase
+ * @phpstan-return array<string, mixed>
+ *
+ * @see \Drupal\jwt_token_refresh\Hook\JwtTokenRefreshRequirements
+ */
+#[LegacyRequirementsHook]
+function jwt_token_refresh_requirements(string $phase): array {
+  // Never at install or update time: an error severity there would block the
+  // module from being installed, and a key cannot be configured yet anyway.
+  if ($phase !== 'runtime') {
+    return [];
+  }
+  return \Drupal::service(JwtTokenRefreshRequirements::class)
+    ->keyRequirement();
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ * The schema tables go with the module on their own; the dummy login hash
+ * does not, because it lives in state rather than in config.
+ */
+function jwt_token_refresh_uninstall(): void {
+  \Drupal::state()->delete('jwt_token_refresh.dummy_hash');
+}
+
+/**
+ * Implements hook_schema().
+ *
+ * @phpstan-return array<string, mixed>
+ */
+function jwt_token_refresh_schema(): array {
+  $schema['jwt_refresh_tokens'] = [
+    'description' => 'Refresh tokens (hashed) with rotation and OWASP reuse detection.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'uid' => [
+        'description' => 'The user this refresh token belongs to.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'token_hash' => [
+        'description' => 'SHA256 of the raw refresh token. The raw token is never stored.',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+      ],
+      'family_id' => [
+        'description' => 'Random id shared by all tokens descending from the same login. Used for OWASP refresh token reuse detection.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ],
+      'revoked' => [
+        'description' => 'Set to 1 on rotation instead of deleting the row, so a replayed (stolen) token can be detected and its whole family revoked.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'expires' => [
+        'description' => 'Unix timestamp at which this token expires.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'created' => [
+        'description' => 'Unix timestamp at which this token was created.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'token_hash' => ['token_hash'],
+    ],
+    'indexes' => [
+      'uid' => ['uid'],
+      'family_id' => ['family_id'],
+      'expires' => ['expires'],
+    ],
+  ];
+
+  $schema['jwt_access_token_sessions'] = [
+    'description' => 'Optional: tracks issued JWT access tokens for server-side revocation (jti allowlist). Only populated when enable_access_token_revocation is TRUE.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'uid' => [
+        'description' => 'The user this access token session belongs to.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'jti_hash' => [
+        'description' => 'SHA256 of the jti claim embedded in the JWT.',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+      ],
+      'refresh_token_id' => [
+        'description' => 'Logical FK to the refresh token that issued this access token. NULL if issued outside the refresh flow. Cascade is APPLICATIVE — revoking a refresh must explicitly DELETE matching rows here (Schema API creates no real FK).',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ],
+      'expires' => [
+        'description' => 'Unix timestamp at which this access token session expires.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'created' => [
+        'description' => 'Unix timestamp at which this session row was created.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'jti_hash' => ['jti_hash'],
+    ],
+    'indexes' => [
+      'uid' => ['uid'],
+      'refresh_token_id' => ['refresh_token_id'],
+      'expires' => ['expires'],
+    ],
+  ];
+
+  return $schema;
+}

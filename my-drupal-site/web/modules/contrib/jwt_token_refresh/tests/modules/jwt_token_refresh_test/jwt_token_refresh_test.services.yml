@@ -1,0 +1,5 @@
+services:
+  jwt_token_refresh_test.response_subscriber:
+    class: Drupal\jwt_token_refresh_test\EventSubscriber\TestResponseSubscriber
+    tags:
+      - { name: event_subscriber }

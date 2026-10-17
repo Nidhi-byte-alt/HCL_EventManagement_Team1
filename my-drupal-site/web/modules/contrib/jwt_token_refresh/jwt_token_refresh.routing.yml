@@ -1,0 +1,43 @@
+# POST /auth/token — login (name + pass -> access + refresh).
+jwt_token_refresh.token:
+  path: '/auth/token'
+  defaults:
+    _controller: '\Drupal\jwt_token_refresh\Controller\TokenController::login'
+  methods: [POST]
+  requirements:
+    # Public by design: anonymous clients must reach the login
+    # endpoint. Brute-force is handled by flood control in the
+    # controller, not by route access.
+    _access: 'TRUE'
+
+# POST /auth/token/refresh — rotate a refresh token.
+jwt_token_refresh.token_refresh:
+  path: '/auth/token/refresh'
+  defaults:
+    _controller: '\Drupal\jwt_token_refresh\Controller\TokenController::refresh'
+  methods: [POST]
+  requirements:
+    # Public by design: the refresh token in the body is the
+    # credential. Flood control guards against guessing.
+    _access: 'TRUE'
+
+# POST /auth/token/revoke — logout. Bearer only: the Drupal session
+# cookie must NOT authenticate this route, else logout-CSRF.
+jwt_token_refresh.token_revoke:
+  path: '/auth/token/revoke'
+  defaults:
+    _controller: '\Drupal\jwt_token_refresh\Controller\TokenController::revoke'
+  methods: [POST]
+  requirements:
+    _user_is_logged_in: 'TRUE'
+  options:
+    _auth: ['jwt_auth']
+
+# Admin settings form.
+jwt_token_refresh.settings_form:
+  path: '/admin/config/system/jwt-token-refresh'
+  defaults:
+    _form: '\Drupal\jwt_token_refresh\Form\JwtTokenRefreshSettingsForm'
+    _title: 'JWT Token Refresh'
+  requirements:
+    _permission: 'administer jwt token refresh'

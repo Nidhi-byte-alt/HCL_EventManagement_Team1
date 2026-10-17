@@ -1,0 +1,29 @@
+name: 'JWT Token Refresh'
+type: module
+description: 'JWT login, refresh token rotation, and configurable token lifetimes for decoupled Drupal — with optional server-side revocation.'
+package: Authentication
+# The floor is 10.3 rather than 10.0 because nothing below the current minor
+# is testable — drupal.org CI offers no variant deeper than previous_major,
+# which installs 10.6 — and under-promising is the safe direction. The whole
+# token flow was in fact verified end to end on Drupal 10.0.11 (install,
+# requirements hook, both tables, login, Bearer auth, rotation, family
+# revocation on replay, revoke, typed errors); the one thing that would break
+# there is the settings form, which uses #config_target, added in 10.2.
+# Drupal 9 is a different case: untestable by construction and out of
+# security support, which for an authentication module is not a promise to
+# make.
+core_version_requirement: ^10.3 || ^11
+configure: jwt_token_refresh.settings_form
+dependencies:
+  - drupal:user
+  - jwt:jwt
+  # Issues the access tokens.
+  - jwt:jwt_auth_issuer
+  # Authenticates Bearer tokens on /auth/token/revoke (resolves the
+  # drupal.uid claim to a Drupal account).
+  - jwt:jwt_auth_consumer
+
+# Information added by Drupal.org packaging script on 2026-09-13
+version: '1.0.5'
+project: 'jwt_token_refresh'
+datestamp: 1789320346

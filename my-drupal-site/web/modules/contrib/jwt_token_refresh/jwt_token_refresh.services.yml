@@ -1,0 +1,89 @@
+services:
+
+  logger.channel.jwt_token_refresh:
+    parent: logger.channel_base
+    arguments: ['jwt_token_refresh']
+
+  Drupal\jwt_token_refresh\Service\PasswordRehashFlag:
+    class: Drupal\jwt_token_refresh\Service\PasswordRehashFlag
+
+  jwt_token_refresh.access_token_session_manager:
+    class: Drupal\jwt_token_refresh\Service\AccessTokenSessionManager
+    arguments:
+      - '@database'
+      - '@config.factory'
+      - '@datetime.time'
+
+  jwt_token_refresh.refresh_token_manager:
+    class: Drupal\jwt_token_refresh\Service\RefreshTokenManager
+    arguments:
+      - '@database'
+      - '@config.factory'
+      - '@datetime.time'
+      - '@entity_type.manager'
+      - '@logger.channel.jwt_token_refresh'
+      - '@jwt_token_refresh.access_token_session_manager'
+
+  jwt_token_refresh.claims_subscriber:
+    class: Drupal\jwt_token_refresh\EventSubscriber\JwtClaimsSubscriber
+    arguments:
+      - '@config.factory'
+      - '@datetime.time'
+      - '@jwt_token_refresh.access_token_session_manager'
+      - '@request_stack'
+    tags:
+      - { name: event_subscriber }
+
+  jwt_token_refresh.access_token_revocation_subscriber:
+    class: Drupal\jwt_token_refresh\EventSubscriber\JwtAccessTokenRevocationSubscriber
+    arguments:
+      - '@config.factory'
+      - '@jwt_token_refresh.access_token_session_manager'
+    tags:
+      - { name: event_subscriber }
+
+  jwt_token_refresh.api_access_denied_subscriber:
+    class: Drupal\jwt_token_refresh\EventSubscriber\JwtApiAccessDeniedSubscriber
+    tags:
+      - { name: event_subscriber }
+
+  jwt_token_refresh.auth_error_subscriber:
+    class: Drupal\jwt_token_refresh\EventSubscriber\JwtAuthErrorSubscriber
+    arguments:
+      - '@jwt.transcoder'
+      - '@config.factory'
+      - '@jwt_token_refresh.access_token_session_manager'
+    tags:
+      - { name: event_subscriber }
+
+  jwt_token_refresh.user_login_intercept_subscriber:
+    class: Drupal\jwt_token_refresh\EventSubscriber\UserLoginInterceptSubscriber
+    arguments:
+      - '@config.factory'
+      - '@current_user'
+      - '@jwt.authentication.jwt'
+      - '@jwt_token_refresh.refresh_token_manager'
+      - '@datetime.time'
+      - '@jwt_token_refresh.access_token_session_manager'
+      - '@logger.channel.jwt_token_refresh'
+    tags:
+      - { name: event_subscriber }
+
+  # The service ID has to be the class name: from Drupal 11.1 the hook
+  # collector registers any undeclared hook class itself, autowired, and
+  # autowiring cannot resolve this module's own interfaces. Declaring it here
+  # with explicit arguments is what stops that from happening.
+  Drupal\jwt_token_refresh\Hook\JwtTokenRefreshHooks:
+    class: Drupal\jwt_token_refresh\Hook\JwtTokenRefreshHooks
+    arguments:
+      - '@config.factory'
+      - '@jwt_token_refresh.refresh_token_manager'
+      - '@jwt_token_refresh.access_token_session_manager'
+      - '@logger.channel.jwt_token_refresh'
+      - '@Drupal\jwt_token_refresh\Service\PasswordRehashFlag'
+
+  Drupal\jwt_token_refresh\Hook\JwtTokenRefreshRequirements:
+    class: Drupal\jwt_token_refresh\Hook\JwtTokenRefreshRequirements
+    arguments:
+      - '@config.factory'
+      - '@entity_type.manager'

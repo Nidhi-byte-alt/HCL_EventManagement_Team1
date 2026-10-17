@@ -1,0 +1,5 @@
+jwt_token_refresh.settings_form:
+  title: 'JWT Token Refresh'
+  description: 'Configure token lifetimes, flood limits and revocation.'
+  route_name: jwt_token_refresh.settings_form
+  parent: system.admin_config_system

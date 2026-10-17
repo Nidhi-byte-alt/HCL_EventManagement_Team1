@@ -1,0 +1,55 @@
+
+/* Registration form container */
+.custom-registration-form {
+  max-width: 480px;
+  margin: 40px auto;
+  padding: 30px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Form labels */
+.custom-registration-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Text, email and password inputs */
+.custom-registration-form input[type="text"],
+.custom-registration-form input[type="email"],
+.custom-registration-form input[type="password"] {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+/* Keyboard focus */
+.custom-registration-form input:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+/* Submit button */
+.custom-registration-form input[type="submit"] {
+  width: 100%;
+  padding: 13px;
+  color: #ffffff;
+  background: #2563eb;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.custom-registration-form input[type="submit"]:hover {
+  background: #1d4ed8;
+}

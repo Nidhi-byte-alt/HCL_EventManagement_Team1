@@ -1,0 +1,4 @@
+administer jwt token refresh:
+  title: 'Administer JWT Token Refresh'
+  description: 'Configure token lifetimes, flood limits, and server-side revocation.'
+  restrict access: true

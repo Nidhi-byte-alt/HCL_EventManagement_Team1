@@ -1,0 +1,45 @@
+################
+# GitLabCI template for Drupal projects.
+#
+# Provided and maintained by the Drupal Association: the `include` block below
+# is the upstream template verbatim, so pipelines stay up to date with core
+# development without touching this file. Full documentation:
+# https://project.pages.drupalcode.org/gitlab_templates/
+#
+# Only the `variables` block at the bottom is specific to this project.
+################
+
+include:
+  - project: $_GITLAB_TEMPLATES_REPO
+    ref: $_GITLAB_TEMPLATES_REF
+    file:
+      - '/includes/include.drupalci.main.yml'
+      - '/includes/include.drupalci.variables.yml'
+      - '/includes/include.drupalci.workflows.yml'
+
+################
+# Defaults for every variable live in
+# https://git.drupalcode.org/project/gitlab_templates/-/blob/main/includes/include.drupalci.variables.yml
+################
+variables:
+  # The info.yml claims `^10.3 || ^11`, but the default pipeline only tests the
+  # current core version (11.x). Opt in to the previous major so the Drupal 10
+  # half of that claim is actually proven rather than asserted.
+  OPT_IN_TEST_PREVIOUS_MAJOR: '1'
+
+  # Core's *minimum* PHP is what gets tested by default. This module deals with
+  # tokens, hashing and timing-sensitive comparisons, so test the newest
+  # supported PHP too.
+  OPT_IN_TEST_MAX_PHP: '1'
+
+  # Opting in is not enough: the template starts every variant except the
+  # current-core one manually, so both variants above would sit in the pipeline
+  # as `manual` jobs with their phpunit/phpstan children skipped. Run them on
+  # pushes and merge requests, which is where the answer is needed.
+  _AUTORUN_PREVIOUS_MAJOR: 'push-and-mr'
+  _AUTORUN_MAX_PHP: 'push-and-mr'
+
+  # The template lets PHPStan fail without failing the pipeline, which makes it
+  # advisory. Make it a real gate: a regression in the static analysis should
+  # stop a release, not sit in the logs.
+  _PHPSTAN_ALLOW_FAILURE: '0'

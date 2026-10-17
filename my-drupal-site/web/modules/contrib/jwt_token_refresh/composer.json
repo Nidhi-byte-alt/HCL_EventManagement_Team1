@@ -1,0 +1,11 @@
+{
+    "name": "drupal/jwt_token_refresh",
+    "description": "JWT login, refresh token rotation, and configurable token lifetimes for decoupled Drupal — with optional server-side revocation.",
+    "type": "drupal-module",
+    "homepage": "https://www.drupal.org/project/jwt_token_refresh",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=8.1",
+        "drupal/jwt": "^2.0"
+    }
+}

@@ -1,0 +1,64 @@
+# PHPStan configuration for JWT Token Refresh.
+#
+# No `paths` are declared on purpose: the drupal.org GitLab CI job runs
+# `phpstan analyze .` from inside this folder, so the path comes from the
+# command line. Declaring paths here would only diverge from what CI analyses.
+parameters:
+  level: 6
+
+  fileExtensions:
+    - php
+    - module
+    - inc
+    - install
+    - theme
+    - profile
+
+  reportUnmatchedIgnoredErrors: false
+
+  ignoreErrors:
+    # new static() is a Drupal best practice (create() factories), so this
+    # cannot be fixed. Same exclusion as the drupal.org default config.
+    - "#^Unsafe usage of new static#"
+
+    # The module supports Drupal 10.3, where EntityInterface::getOriginal()
+    # did not exist yet. On the current core this method_exists() is indeed
+    # always true — that is the point: the fallback serves the previous major,
+    # which the `phpstan (previous major)` CI variant analyses.
+    -
+      identifier: function.alreadyNarrowedType
+      path: src/Hook/JwtTokenRefreshHooks.php
+
+    # #[RunTestsInSeparateProcesses] is mandatory from Drupal 11.3 (core throws
+    # without it in Drupal 12) and only exists from PHPUnit 10. On a Drupal 10
+    # site still pinned to PHPUnit 9.6 the attribute is never read, so the
+    # tests behave exactly as before — the class being absent there is
+    # expected, not a defect.
+    -
+      identifier: attribute.notFound
+      paths:
+        - tests/src/Functional/*.php
+        - tests/src/Kernel/*.php
+
+    # The module supports both requirements APIs: hook_requirements() for
+    # Drupal 10.3 to 11.1, and hook_runtime_requirements() from 11.2, with
+    # #[LegacyRequirementsHook] disabling the former where the latter runs.
+    # Each half necessarily references a symbol the other core version lacks:
+    # the attribute class arrived in 11.3, the severity enum in 11.2. Both are
+    # only ever evaluated on a core that has them.
+    -
+      identifier: attribute.notFound
+      path: jwt_token_refresh.install
+
+    # Object oriented hooks are discovered from Drupal 11.1 only, so the
+    # procedural implementations in the .module file stay for 10.3 to 11.0 and
+    # carry #[LegacyHook] to keep the two from both firing. Drupal 10.4
+    # shipped no-op #[Hook] and #[LegacyHook] classes for exactly this reason,
+    # but 10.5 dropped them again, so on the core the `previous major` variant
+    # installs neither attribute class exists. Both are inert there — an
+    # attribute is only ever read by the core that defines it.
+    -
+      identifier: attribute.notFound
+      paths:
+        - jwt_token_refresh.module
+        - src/Hook/*.php
